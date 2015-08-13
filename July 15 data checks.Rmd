@@ -1,0 +1,65 @@
+---
+title: "Checks on New Data"
+author: "James Hunter"
+date: "August 12, 2015"
+output: pdf_document
+---
+
+Run basic checks on 1st record in new data sent by USP
+```{r}
+x
+x %in% pacientes$amostraid
+load(file = "mut.RData")
+x %in% mutations$id
+xmuts <- which(mutations$id == x)
+mutations[xmuts,]
+```
+ The csv file is represented correctly in the mutations database
+ 
+ The next step is to organize all the id numbers from the csv files from USP and check against the records in `patients` and `mutations`.
+ 
+ 
+```{r filelist}
+dir <- "out_w_fasta"  # location of USP data
+filelist <- list.files(path = dir, pattern = "csv")
+numfiles = length(filelist)
+```
+
+Make vector of `mutations$id` and of `patients$amostraid`
+```{r vectors}
+mut_id <- mutations$id
+pac_id <- pacientes$amostraid
+```
+
+Make list of all the amostraid's from the USP files using a loop
+
+```{r getamostraids}
+# passar por todos os arquivos, ler o conteúdo de cada mutação e copiar para data frame # das mutações
+
+# set up a blank character vector for USP id's
+uspID <- vector(mode = "character", length = numfiles)
+# date <- vector(mode = "character", length = numfiles) leave out for now
+
+for (i in 1:numfiles) {
+   fullfile <- paste(dir, "/", filelist[i], sep = "")
+   temp <- NULL
+# ler o arquivo na memoria como variável temp
+   try(temp <- read.csv(fullfile, header = FALSE, 
+                        stringsAsFactors = FALSE), silent = TRUE)
+   if (is.null(temp)) badcsvformat <- c(badcsvformat, filelist[i])
+      else
+# extract the first cell and row info [1,1] and add to vector of USPids
+      uspID[i] <- substr(temp[1,1], 1, 9)
+}
+# get rid of the empty ID's ("")p
+uspID <- uspID[uspID != ""]
+```
+
+Get vector with hits in patient database and in mutations database
+```{r hits}
+hits_mut <- which(uspID %in% mutations$id)
+hits_pac <- which(uspID %in% pacientes$amostraid)
+
+```
+
+
